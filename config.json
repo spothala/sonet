@@ -1,0 +1,5 @@
+{
+  "version": "1.0",
+  "description": "Google Deployment Pipeline V1.2",
+  "env": "Development"
+}
