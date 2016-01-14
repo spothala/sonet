@@ -6,6 +6,7 @@ import (
 )
 
 type SocialMedia interface {
+    //Auth(http.ResponseWriter, *http.Request)
     Post(http.ResponseWriter, *http.Request)
 }
 

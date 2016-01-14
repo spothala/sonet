@@ -6,6 +6,8 @@ import (
     "fmt"
     "errors"
     "sonet/utils"
+    "sonet/facebook"
+    "crypto/tls"
 )
 
 type ServerStatus struct {
@@ -16,6 +18,15 @@ type ServerVersion struct {
     Version string
     Description string
     Environment string
+}
+
+func NewClient()(client *http.Client){
+    // Creating HTTP Client with SSL support - Its Secure but we'll skip cert verification
+    tr := &http.Transport{
+        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+    }
+    client = &http.Client{Transport: tr}
+    return
 }
 
 func Handler(config utils.Config) http.Handler {
@@ -35,12 +46,22 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
             case "post":
                 switch req.Method {
                 case "POST":
-                    ParseRequest(w, req)
+                    PostRequest(w, req)
                 case "GET":
                     RespondJson(w, ServerStatus{"End Point Responds"})
                 default:
                     RespondError(w, nil, http.StatusMethodNotAllowed)
                 }
+            case "authfb":
+                facebook.Auth(NewClient(), w, req)
+                /*switch req.Method {
+                case "POST":
+                    facebook.Auth(NewClient(), w, req)
+                case "GET":
+                    RespondJson(w, ServerStatus{"End Point Responds"})
+                default:
+                    RespondError(w, nil, http.StatusMethodNotAllowed)
+                }*/
             default:
               RespondError(w, errors.New("This routing is not defined"), http.StatusNotFound)
           }
