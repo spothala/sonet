@@ -1,34 +1,45 @@
 package facebook
 
 import (
-    "sonet/utils"
-    "net/http"
-    "fmt"
-    "net/url"
+	"fmt"
+	"net/http"
+	"net/url"
+	"sonet/utils"
 )
 
 const (
-    graphApiUrl  = "https://graph.facebook.com"
-    redirect_uri = "http://localhost:8080/"
-    client_id = "1071648322880677"
+	GraphApiUrl   = "https://graph.facebook.com"
+	redirect_uri  = "http://localhost:8080/"
+	client_id     = "" //APP_ID
+	client_secret = "" //APP_SECRET
 )
 
-func Auth(client *http.Client, w http.ResponseWriter, req *http.Request) {
-    fmt.Println("Trying to Auth Facebook")
-    params := url.Values{}
-    params.Set("type","user_agent")
-    params.Set("client_id",client_id)
-    params.Set("redirect_uri", redirect_uri)
-    params.Set("scope","user_about_me,user_friends,user_likes,user_posts,user_events,user_status")
-    httpReq, err := http.NewRequest("POST", graphApiUrl+"/oauth/authorize?"+params.Encode(), nil)
-    if err != nil {
-       fmt.Println("Failed to Prepare JsonRequest")
-    }
-    resp, err := client.Do(httpReq)
-    if err != nil {
-       fmt.Println(err)
-    }
-    fmt.Println("Status Code: "+resp.Status)
-    w.Header().Set("Content-Type", "application/html")
-    w.Write(utils.ReturnResponseBody(resp.Body))
+var AccessToken string
+
+func GetMyDetails(w http.ResponseWriter, req *http.Request) (response []byte) {
+	fmt.Println("Getting My Details")
+	params := url.Values{}
+	params.Set("fields", "id,name")
+	params.Set("access_token", AccessToken)
+	return utils.ProcessRequest("GET", GraphApiUrl+"/me?"+params.Encode())
+}
+
+func Auth(w http.ResponseWriter, req *http.Request) (response []byte) {
+	fmt.Println("Trying to Auth Facebook")
+	params := url.Values{}
+	params.Set("client_id", client_id)
+	params.Set("redirect_uri", redirect_uri)
+	params.Set("scope", "user_about_me,user_friends,user_likes,user_posts,user_events,user_status,publish_actions")
+	params.Set("display", "page")
+	return utils.ProcessRequest("POST", GraphApiUrl+"/oauth/authorize?"+params.Encode())
+}
+
+func ConfirmIdentity(w http.ResponseWriter, req *http.Request, code string) (response []byte) {
+	fmt.Println("Confirming Identity with FB")
+	params := url.Values{}
+	params.Set("client_id", client_id)
+	params.Set("redirect_uri", redirect_uri)
+	params.Set("client_secret", client_secret)
+	params.Set("code", code)
+	return utils.ProcessRequest("GET", GraphApiUrl+"/v2.3/oauth/access_token?"+params.Encode())
 }
