@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sonet/facebook"
+	"sonet/twitter"
 	"sonet/utils"
 )
 
@@ -48,7 +49,11 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 		case "post":
 			switch req.Method {
 			case "POST":
-				PostRequest(w, req)
+				if facebook.CheckLoginStatus() {
+					PostRequest(w, req)
+				} else {
+					fmt.Println("Redirecting to authfb")
+				}
 			case "GET":
 				utils.RespondJson(w, ServerStatus{"End Point Responds"})
 			default:
@@ -63,13 +68,26 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 			default:
 				utils.RespondError(w, nil, http.StatusMethodNotAllowed)
 			}
+		case "authtwitter":
+			switch req.Method {
+			case "POST":
+				twitter.SignIn(w, req)
+			case "GET":
+				utils.RespondJson(w, ServerStatus{"End Point Responds"})
+			default:
+				utils.RespondError(w, nil, http.StatusMethodNotAllowed)
+			}
 		case "index":
 			render(w, "index.html")
+		case "oauth2callback":
+			fmt.Println(req.Method)
 		default:
 			if req.URL.Query().Get("code") != "" {
 				respJson := utils.GetJson(facebook.ConfirmIdentity(w, req, req.URL.Query().Get("code")))
 				facebook.AccessToken = respJson.(map[string]interface{})["access_token"].(string)
-				//fmt.Println(facebook.AccessToken)
+				utils.WriteToFile(facebook.AccessToken, facebook.AccessTokenFile)
+				expires_in := respJson.(map[string]interface{})["expires_in"].(float64)
+				fmt.Println(((expires_in / 60) / 60) / 24)
 				respJson = utils.GetJson(facebook.GetMyDetails(w, req))
 				fmt.Println(respJson.(map[string]interface{})["id"].(string))
 				fmt.Println(respJson.(map[string]interface{})["name"].(string))

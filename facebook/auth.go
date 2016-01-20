@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"sonet/utils"
 )
 
@@ -15,6 +16,19 @@ const (
 )
 
 var AccessToken string
+var AccessTokenFile = utils.GetHomeDir() + "/.fb_access_token"
+
+func CheckLoginStatus() (status bool) {
+	if _, err := os.Stat(AccessTokenFile); err == nil {
+		AccessToken, _ = utils.ReadFromFile(AccessTokenFile)
+		if err != nil {
+			return false
+		}
+	} else {
+		return false
+	}
+	return true
+}
 
 func GetMyDetails(w http.ResponseWriter, req *http.Request) (response []byte) {
 	fmt.Println("Getting My Details")

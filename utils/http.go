@@ -18,6 +18,22 @@ func NewClient() (client *http.Client) {
 	return
 }
 
+func ProcessHeaderRequest(method string, url string, header string) (response []byte) {
+	httpReq, err := http.NewRequest(method, url, nil)
+	httpReq.Header.Set("Authorization", header)
+	fmt.Println(header)
+	fmt.Println(httpReq.URL)
+	if err != nil {
+		fmt.Println("Failed to Prepare JsonRequest")
+	}
+	resp, err := NewClient().Do(httpReq)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Status Code: " + resp.Status)
+	return ReturnResponseBody(resp.Body)
+}
+
 func ProcessRequest(method string, url string) (response []byte) {
 	httpReq, err := http.NewRequest(method, url, nil)
 	fmt.Println(httpReq.URL)
