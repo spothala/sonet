@@ -20,7 +20,7 @@ var AccessTokenFile = utils.GetHomeDir() + "/.fb_access_token"
 
 func CheckLoginStatus() (status bool) {
 	if _, err := os.Stat(AccessTokenFile); err == nil {
-		AccessToken, _ = utils.ReadFromFile(AccessTokenFile)
+		AccessToken, err = utils.ReadFromFile(AccessTokenFile)
 		if err != nil {
 			return false
 		}

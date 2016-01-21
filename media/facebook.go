@@ -15,7 +15,7 @@ type Facebook struct {
 func (r *Facebook) Post(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("Post Added in Facebook Stream, " + facebook.AccessToken)
 	params := url.Values{}
-	params.Set("message", "This is YAY feeling .. Doing something like this")
+	params.Set("message", "First Multi-Platform Status Posting.... :) ")
 	params.Set("access_token", facebook.AccessToken)
 	response := utils.ProcessRequest("POST", facebook.GraphApiUrl+"/me/feed?"+params.Encode())
 	fmt.Println(string(response))

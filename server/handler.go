@@ -49,7 +49,7 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 		case "post":
 			switch req.Method {
 			case "POST":
-				if facebook.CheckLoginStatus() {
+				if facebook.CheckLoginStatus() && twitter.CheckLoginStatus() {
 					PostRequest(w, req)
 				} else {
 					fmt.Println("Redirecting to authfb")
@@ -81,6 +81,11 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 			render(w, "index.html")
 		case "oauth2callback":
 			fmt.Println(req.Method)
+			if req.URL.Query().Get("oauth_token") != "" {
+				twitter.AccessToken = req.URL.Query().Get("oauth_token")
+				twitter.ReIssueAccessToken(req.URL.Query().Get("oauth_verifier"))
+			}
+			utils.RespondJson(w, ServerStatus{twitter.AccessToken})
 		default:
 			if req.URL.Query().Get("code") != "" {
 				respJson := utils.GetJson(facebook.ConfirmIdentity(w, req, req.URL.Query().Get("code")))

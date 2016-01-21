@@ -22,3 +22,11 @@ func GetJson(body []byte) (jsonSource interface{}) {
 	}
 	return
 }
+
+func WriteJsonToFile(JsonType interface{}, file string) {
+	js, err := json.Marshal(JsonType)
+	if err != nil {
+		log.Print("Invalid JSON format", err)
+	}
+	WriteBytesToFile(js, file)
+}
