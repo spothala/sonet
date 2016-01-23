@@ -89,14 +89,14 @@ func SignIn(w http.ResponseWriter, req *http.Request) {
 	endUrl := "/oauth/request_token"
 	header := PrepareOAuthHeaders(method, endUrl, params)
 	//fmt.Println(header)
-	oauth_token_response := string(utils.ProcessHeaderRequest(method, ApiUrl+endUrl, header))
+	oauth_token_response := string(utils.ProcessRequest(method, header, ApiUrl+endUrl))
 	fmt.Println(oauth_token_response)
 	if strings.Contains(oauth_token_response, "oauth_token") {
 		AccessToken = strings.Split(strings.Split(oauth_token_response, "&")[0], "=")[1]
 		fmt.Println(AccessToken)
 		params := url.Values{}
 		params.Set("oauth_token", AccessToken)
-		fmt.Println(string(utils.ProcessRequest("GET", ApiUrl+"/oauth/authenticate?"+params.Encode()))) // TODO: Replace this with LOGIN Page
+		fmt.Println(string(utils.ProcessRequest("GET", "", ApiUrl+"/oauth/authenticate?"+params.Encode()))) // TODO: Replace this with LOGIN Page
 	} else {
 		fmt.Println(oauth_token_response)
 	}
@@ -112,7 +112,7 @@ func ReIssueAccessToken(oauth_verifier string) {
 	fmt.Println(header)
 	params = url.Values{}
 	params.Set("oauth_verifier", oauth_verifier)
-	oauth_token_response := string(utils.ProcessHeaderRequest(method, ApiUrl+endUrl+"?"+params.Encode(), header))
+	oauth_token_response := string(utils.ProcessRequest(method, header, ApiUrl+endUrl+"?"+params.Encode()))
 	if strings.Contains(oauth_token_response, "oauth_token") {
 		AccessToken = strings.Split(strings.Split(oauth_token_response, "&")[0], "=")[1]
 		AccessTokenSecret = strings.Split(strings.Split(oauth_token_response, "&")[1], "=")[1]

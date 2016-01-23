@@ -1,20 +1,17 @@
 package media
 
-import (
-  "net/http"
-  "fmt"
-)
+import "fmt"
 
 type Instagram struct {
-    Response string
+	Response string
 }
 
-func (r *Instagram) Post(w http.ResponseWriter, req *http.Request) {
-    fmt.Println("Post Added in Instagram Stream")
+func (r *Instagram) Post(status string) {
+	fmt.Println("Post Added in Instagram Stream")
 }
 
 func init() {
-    Add("instagram", func() SocialMedia {
-        return &Instagram{}
-    })
+	Add("instagram", func() SocialMedia {
+		return &Instagram{}
+	})
 }

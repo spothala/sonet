@@ -35,7 +35,7 @@ func GetMyDetails(w http.ResponseWriter, req *http.Request) (response []byte) {
 	params := url.Values{}
 	params.Set("fields", "id,name")
 	params.Set("access_token", AccessToken)
-	return utils.ProcessRequest("GET", GraphApiUrl+"/me?"+params.Encode())
+	return utils.ProcessRequest("GET", "", GraphApiUrl+"/me?"+params.Encode())
 }
 
 func Auth(w http.ResponseWriter, req *http.Request) (response []byte) {
@@ -45,7 +45,7 @@ func Auth(w http.ResponseWriter, req *http.Request) (response []byte) {
 	params.Set("redirect_uri", redirect_uri)
 	params.Set("scope", "user_about_me,user_friends,user_likes,user_posts,user_events,user_status,publish_actions")
 	params.Set("display", "page")
-	return utils.ProcessRequest("POST", GraphApiUrl+"/oauth/authorize?"+params.Encode())
+	return utils.ProcessRequest("POST", "", GraphApiUrl+"/oauth/authorize?"+params.Encode())
 }
 
 func ConfirmIdentity(w http.ResponseWriter, req *http.Request, code string) (response []byte) {
@@ -55,5 +55,5 @@ func ConfirmIdentity(w http.ResponseWriter, req *http.Request, code string) (res
 	params.Set("redirect_uri", redirect_uri)
 	params.Set("client_secret", client_secret)
 	params.Set("code", code)
-	return utils.ProcessRequest("GET", GraphApiUrl+"/v2.3/oauth/access_token?"+params.Encode())
+	return utils.ProcessRequest("GET", "", GraphApiUrl+"/v2.3/oauth/access_token?"+params.Encode())
 }
