@@ -19,13 +19,11 @@ func (r *Twitter) Post(status string) {
 func postTweet(status string) {
 	fmt.Println("Post Added in Twitter Stream " + twitter.AccessToken)
 	params := twitter.GetHeadersMap()
-	params.Set("status", url.QueryEscape(status))
+	params.Set("status", status)
 	method := "POST"
 	endUrl := "/1.1/statuses/update.json"
 	header := twitter.PrepareOAuthHeaders(method, endUrl, params)
-	params = url.Values{}
-	params.Set("status", url.QueryEscape(status))
-	response := utils.ProcessRequest(method, header, twitter.ApiUrl+endUrl+"?"+params.Encode())
+	response := utils.ProcessRequest(method, header, twitter.ApiUrl+endUrl+"?status="+utils.Encode(status, false), nil)
 	fmt.Println(string(response))
 }
 
@@ -40,7 +38,7 @@ func listTweets() {
 	params = url.Values{}
 	params.Set("screen_name", twitter.ScreenName)
 	params.Set("count", "2")
-	response := utils.ProcessRequest(method, header, twitter.ApiUrl+endUrl+"?"+params.Encode())
+	response := utils.ProcessRequest(method, header, twitter.ApiUrl+endUrl+"?"+params.Encode(), nil)
 	fmt.Println(string(response))
 }
 

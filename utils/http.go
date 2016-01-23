@@ -18,8 +18,8 @@ func NewClient() (client *http.Client) {
 	return
 }
 
-func ProcessRequest(method string, header string, Apiurl string) (response []byte) {
-	httpReq, err := http.NewRequest(method, Apiurl, nil)
+func ProcessRequest(method string, header string, Apiurl string, Body io.ReadCloser) (response []byte) {
+	httpReq, err := http.NewRequest(method, Apiurl, Body)
 	if header != "" {
 		httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		httpReq.Header.Set("Authorization", header)

@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"sonet/utils"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -59,44 +60,61 @@ func getEpochTime() string {
 	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
-func PrepareOAuthHeaders(reqMethod string, endUrl string, params url.Values) (header string) {
-	params.Set("oauth_signature", createSignature(reqMethod, endUrl, params.Encode()))
-	//fmt.Println(params.Encode())
-	header = params.Encode()
-	header = strings.Replace(header, "&", "\", ", -1)
-	header = strings.Replace(header, "=", "=\"", -1)
-	//fmt.Println(header + "\"")
-	return "OAuth " + header + "\""
+func getSortedKeys(params url.Values) []string {
+	// Sort the Keys First
+	sortedKeys := make([]string, len(params))
+	i := 0
+	for k, _ := range params {
+		sortedKeys[i] = k
+		i++
+	}
+	sort.Strings(sortedKeys)
+	return sortedKeys
+}
+
+func encodedOauthParams(params url.Values) string {
+	sortedKeys := getSortedKeys(params)
+	encodedString := ""
+	for key := range sortedKeys {
+		encodedString += sortedKeys[key] + "="
+		encodedString += utils.Encode(params.Get(sortedKeys[key]), false) + "&"
+	}
+	fmt.Println(params.Encode())
+	fmt.Println(encodedString[:len(encodedString)-len("&")])
+	return encodedString[:len(encodedString)-len("&")]
+}
+
+func PrepareOAuthHeaders(reqMethod string, endUrl string, params url.Values) string {
+	params.Set("oauth_signature", createSignature(reqMethod, endUrl, encodedOauthParams(params)))
+	sortedKeys := getSortedKeys(params)
+	header := "OAuth "
+	for key := range sortedKeys {
+		header += sortedKeys[key] + "=\""
+		header += utils.Encode(params.Get(sortedKeys[key]), false) + "\", "
+	}
+	return header[:len(header)-len(", ")]
 }
 
 func createSignature(reqMethod string, endUrl string, paramsEncode string) (sig string) {
-	h := hmac.New(sha1.New, []byte(url.QueryEscape(client_secret)+"&"+url.QueryEscape(AccessTokenSecret))) //TODO: Little Suspicious
-	h.Write([]byte(reqMethod + "&" + url.QueryEscape(ApiUrl+endUrl) + "&" + url.QueryEscape(paramsEncode)))
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+	sign_key := []byte(utils.Encode(client_secret, false) + "&" + utils.Encode(AccessTokenSecret, false))
+	h := hmac.New(sha1.New, sign_key) //TODO: Little Suspicious
+	h.Write([]byte(reqMethod + "&" + utils.Encode(ApiUrl+endUrl, false) + "&" + utils.Encode(paramsEncode, false)))
+	return base64.StdEncoding.EncodeToString(h.Sum(sign_key[:0]))
 }
 
 func SignIn(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("Trying to Auth Twitter")
 	// Preparing Params
-	params := url.Values{}
+	params := GetHeadersMap()
 	params.Set("oauth_callback", redirect_uri)
-	params.Set("oauth_consumer_key", client_id)
-	params.Set("oauth_nonce", getOAuthNonce())
-	params.Set("oauth_signature_method", "HMAC-SHA1")
-	params.Set("oauth_timestamp", getEpochTime())
-	params.Set("oauth_version", "1.0")
 	method := "POST"
 	endUrl := "/oauth/request_token"
 	header := PrepareOAuthHeaders(method, endUrl, params)
-	//fmt.Println(header)
-	oauth_token_response := string(utils.ProcessRequest(method, header, ApiUrl+endUrl))
+	oauth_token_response := string(utils.ProcessRequest(method, header, ApiUrl+endUrl, nil))
 	fmt.Println(oauth_token_response)
 	if strings.Contains(oauth_token_response, "oauth_token") {
 		AccessToken = strings.Split(strings.Split(oauth_token_response, "&")[0], "=")[1]
-		fmt.Println(AccessToken)
-		params := url.Values{}
-		params.Set("oauth_token", AccessToken)
-		fmt.Println(string(utils.ProcessRequest("GET", "", ApiUrl+"/oauth/authenticate?"+params.Encode()))) // TODO: Replace this with LOGIN Page
+		fmt.Println(string(utils.ProcessRequest("GET", "", ApiUrl+"/oauth/authenticate?oauth_token="+utils.Encode(AccessToken, false), nil))) // TODO: Replace this with LOGIN Page
 	} else {
 		fmt.Println(oauth_token_response)
 	}
@@ -112,7 +130,7 @@ func ReIssueAccessToken(oauth_verifier string) {
 	fmt.Println(header)
 	params = url.Values{}
 	params.Set("oauth_verifier", oauth_verifier)
-	oauth_token_response := string(utils.ProcessRequest(method, header, ApiUrl+endUrl+"?"+params.Encode()))
+	oauth_token_response := string(utils.ProcessRequest(method, header, ApiUrl+endUrl+"?"+params.Encode(), nil))
 	if strings.Contains(oauth_token_response, "oauth_token") {
 		AccessToken = strings.Split(strings.Split(oauth_token_response, "&")[0], "=")[1]
 		AccessTokenSecret = strings.Split(strings.Split(oauth_token_response, "&")[1], "=")[1]
@@ -130,7 +148,9 @@ func GetHeadersMap() url.Values {
 	params.Set("oauth_nonce", getOAuthNonce())
 	params.Set("oauth_signature_method", "HMAC-SHA1")
 	params.Set("oauth_timestamp", getEpochTime())
-	params.Set("oauth_token", AccessToken)
+	if AccessToken != "" {
+		params.Set("oauth_token", AccessToken)
+	}
 	params.Set("oauth_version", "1.0")
 	return params
 }

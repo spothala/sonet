@@ -16,7 +16,7 @@ func (r *Facebook) Post(status string) {
 	params := url.Values{}
 	params.Set("message", status)
 	params.Set("access_token", facebook.AccessToken)
-	response := utils.ProcessRequest("POST", "", facebook.GraphApiUrl+"/me/feed?"+params.Encode())
+	response := utils.ProcessRequest("POST", "", facebook.GraphApiUrl+"/me/feed?"+params.Encode(), nil)
 	fmt.Println(string(response))
 }
 
