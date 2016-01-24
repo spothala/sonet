@@ -49,8 +49,14 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 		case "post":
 			switch req.Method {
 			case "POST":
+				req.ParseForm()
+				status := req.Form.Get("status")
+				if status == "" {
+					utils.RespondJson(w, ServerStatus{"Please Post along with status Parameter"})
+					return
+				}
 				if facebook.CheckLoginStatus() && twitter.CheckLoginStatus() {
-					PostRequest("First Multi-Platform Status Posting... YaaY :) ")
+					PostRequest(status)
 				} else {
 					fmt.Println("Redirecting to authfb")
 				}
