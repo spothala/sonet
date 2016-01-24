@@ -5,7 +5,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"sonet/facebook"
+	"sonet/instagram"
 	"sonet/twitter"
 	"sonet/utils"
 )
@@ -55,7 +57,7 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 					utils.RespondJson(w, ServerStatus{"Please Post along with status Parameter"})
 					return
 				}
-				if facebook.CheckLoginStatus() && twitter.CheckLoginStatus() {
+				if facebook.CheckLoginStatus() && twitter.CheckLoginStatus() && instagram.CheckLoginStatus() {
 					PostRequest(status)
 				} else {
 					fmt.Println("Redirecting to authfb")
@@ -83,6 +85,15 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 			default:
 				utils.RespondError(w, nil, http.StatusMethodNotAllowed)
 			}
+		case "authinsta":
+			switch req.Method {
+			case "POST":
+				fmt.Println(string(instagram.Auth(w, req)))
+			case "GET":
+				utils.RespondJson(w, ServerStatus{"End Point Responds"})
+			default:
+				utils.RespondError(w, nil, http.StatusMethodNotAllowed)
+			}
 		case "index":
 			render(w, "index.html")
 		case "oauth2callback":
@@ -92,9 +103,21 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 				twitter.ReIssueAccessToken(req.URL.Query().Get("oauth_verifier"))
 			}
 			utils.RespondJson(w, ServerStatus{twitter.AccessToken})
+		case "callback":
+			fmt.Println(req.URL.Query().Get("code"))
+			if req.URL.Query().Get("code") != "" {
+				form := url.Values{}
+				form.Set("client_id", instagram.Client_id)
+				form.Set("client_secret", instagram.Client_secret)
+				form.Set("grant_type", "authorization_code")
+				form.Set("redirect_uri", instagram.Redirect_uri)
+				form.Set("code", req.URL.Query().Get("code"))
+				jsonOut := utils.GetJson(utils.ProcessFormRequest("POST", "", instagram.ApiUrl+"/oauth/access_token", form))
+				utils.WriteJsonToFile(jsonOut, instagram.AccessTokenFile)
+			}
 		default:
 			if req.URL.Query().Get("code") != "" {
-				respJson := utils.GetJson(facebook.ConfirmIdentity(w, req, req.URL.Query().Get("code")))
+				respJson := utils.GetJson(facebook.ConfirmIdentity(w, req, req.URL.Query().Get("code"))) //TODO: Browser Sign-Up
 				facebook.AccessToken = respJson.(map[string]interface{})["access_token"].(string)
 				utils.WriteToFile(facebook.AccessToken, facebook.AccessTokenFile)
 				expires_in := respJson.(map[string]interface{})["expires_in"].(float64)
