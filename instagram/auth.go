@@ -1,6 +1,9 @@
 package instagram
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,7 +13,7 @@ import (
 
 const (
 	ApiUrl        = "https://api.instagram.com"
-	Redirect_uri  = "http://127.0.0.1:8080/callback"
+	Redirect_uri  = "http://localhost:8080/callback"
 	Client_id     = "" //APP_ID
 	Client_secret = "" //APP_SECRET
 )
@@ -35,6 +38,18 @@ func CheckLoginStatus() (status bool) {
 		return false
 	}
 	return true
+}
+
+func CreateSignature(params url.Values, endPoint string) string {
+	sign_key := []byte(Client_secret)
+	h := hmac.New(sha1.New, sign_key)
+	sign := endPoint
+	for k, v := range params {
+		sign += "|" + k + "=" + v[0]
+	}
+	fmt.Println(sign)
+	h.Write([]byte(sign))
+	return base64.StdEncoding.EncodeToString(h.Sum(sign_key[:0]))
 }
 
 func Auth(w http.ResponseWriter, req *http.Request) (response []byte) {

@@ -88,7 +88,8 @@ func handleJenkinsCall(h http.Handler, config utils.Config) http.Handler {
 		case "authinsta":
 			switch req.Method {
 			case "POST":
-				fmt.Println(string(instagram.Auth(w, req)))
+				instagram.Auth(w, req)
+				//fmt.Println(string(instagram.Auth(w, req)))
 			case "GET":
 				utils.RespondJson(w, ServerStatus{"End Point Responds"})
 			default:
