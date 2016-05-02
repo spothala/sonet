@@ -25,8 +25,8 @@ func ProcessFormRequest(method string, header string, Apiurl string, data url.Va
 	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if header != "" {
 		httpReq.Header.Set("Authorization", header)
+		//fmt.Println(header)
 	}
-	fmt.Println(header)
 	fmt.Println(httpReq.URL)
 	if err != nil {
 		fmt.Println("Failed to Prepare JsonRequest")
@@ -35,17 +35,16 @@ func ProcessFormRequest(method string, header string, Apiurl string, data url.Va
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("Status Code: " + resp.Status)
+	checkHttpResponseStatus(resp)
 	return ReturnResponseBody(resp.Body)
 }
 
-func ProcessRequest(method string, header string, Apiurl string, body io.ReadCloser) (response []byte) {
+func ProcessRequest(method string, header map[string][]string, Apiurl string, body io.ReadCloser) (response []byte) {
 	httpReq, err := http.NewRequest(method, Apiurl, body)
-	if header != "" {
-		httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		httpReq.Header.Set("Authorization", header)
+	if header != nil {
+		httpReq.Header = header
+		fmt.Println(header)
 	}
-	fmt.Println(header)
 	fmt.Println(httpReq.URL)
 	if err != nil {
 		fmt.Println("Failed to Prepare JsonRequest")
@@ -54,13 +53,22 @@ func ProcessRequest(method string, header string, Apiurl string, body io.ReadClo
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("Status Code: " + resp.Status)
+	checkHttpResponseStatus(resp)
 	return ReturnResponseBody(resp.Body)
 }
 
-func printHttpResponseBody(body io.ReadCloser) {
-	//defer body.Close()
-	contents, err := ioutil.ReadAll(body)
+func checkHttpResponseStatus(httpResponse *http.Response) {
+	//printHttpResponseBody(httpResponse)
+	if httpResponse.StatusCode != 200 {
+		fmt.Println("HTTP Status: " + httpResponse.Status)
+		printHttpResponseBody(httpResponse)
+		//os.Exit(1)
+	}
+}
+
+func printHttpResponseBody(httpResponse *http.Response) {
+	//defer httpResponse.Body.Close()
+	contents, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
 		fmt.Printf("%s", err)
 		os.Exit(1)
